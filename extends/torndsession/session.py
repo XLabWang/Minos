@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright @ 2014 Mitchell Chu
-# 
+#
 
 from uuid import uuid4
 import datetime
@@ -10,32 +10,32 @@ import datetime
 from extends.torndsession.driver import SessionDriverFactory
 
 try:
-    import cPickle as pickle #py2
+    import cPickle as pickle  #py2
 except ImportError:
-    import pickle #py3
+    import pickle  #py3
 
 
 class SessionManager(object):
     '''
     '''
     SESSION_ID = 'PYSESSID'
-    DEFAULT_SESSION_LIFETIME = 3600 # seconds
-    
+    DEFAULT_SESSION_LIFETIME = 3600  # seconds
+
     def __init__(self, handler):
-        self._default_session_lifetime = datetime.datetime.utcnow() + datetime.timedelta(seconds = self.DEFAULT_SESSION_LIFETIME)
+        self._default_session_lifetime = datetime.datetime.utcnow(
+        ) + datetime.timedelta(seconds=self.DEFAULT_SESSION_LIFETIME)
         self.handler = handler
-        self.settings = {}       # session configurations
+        self.settings = {}  # session configurations
         self._expires = self._default_session_lifetime
         self._is_dirty = True
         self.__init_session_driver()
-        self.__init_session_object() # 初始化Session对象
+        self.__init_session_object()  # 初始化Session对象
 
     def __init_session_object(self):
         session_id = self.handler.get_cookie(self.SESSION_ID)
         if not session_id:
             session_id = uuid4().hex
-            self.handler.set_cookie(self.SESSION_ID,
-                                    session_id,
+            self.handler.set_cookie(self.SESSION_ID, session_id,
                                     **self.__session_settings())
             self._is_dirty = True
             self.session = {}
@@ -51,7 +51,8 @@ class SessionManager(object):
             expires = cookie_config.get("expires")
             expires_days = cookie_config.get("expires_days")
             if expires_days is not None and not expires:
-                expires = datetime.datetime.utcnow() + datetime.timedelta(days = expires_days)
+                expires = datetime.datetime.utcnow() + datetime.timedelta(
+                    days=expires_days)
             if expires and isinstance(expires, datetime.datetime):
                 self._expires = expires
         self._expires = self._expires if self._expires else self._default_session_lifetime
@@ -66,18 +67,23 @@ class SessionManager(object):
         driver = self.settings.get("driver")
         if not driver: raise SessionConfigurationError('driver not found')
         driver_settings = self.settings.get("driver_settings", {})
-        if not driver_settings: raise SessionConfigurationError('driver settings not found.')
+        if not driver_settings:
+            raise SessionConfigurationError('driver settings not found.')
 
         cache_driver = self.settings.get("cache_driver", True)
         if cache_driver:
             cache_name = '__cached_session_driver'
             cache_handler = self.handler.application
             if not hasattr(cache_handler, cache_name):
-                setattr(cache_handler, cache_name, SessionDriverFactory.create_driver(driver, **driver_settings))
+                setattr(cache_handler, cache_name,
+                        SessionDriverFactory.create_driver(driver, **
+                                                           driver_settings))
             session_driver = getattr(cache_handler, cache_name)
         else:
-            session_driver = SessionDriverFactory.create_driver(driver, driver_settings)
-        self.driver = session_driver(**driver_settings) # create session driver instance.
+            session_driver = SessionDriverFactory.create_driver(
+                driver, driver_settings)
+        self.driver = session_driver(
+            **driver_settings)  # create session driver instance.
 
     def __get_session_driver(self):
         driver_name = self.setting.get("driver")
@@ -85,13 +91,18 @@ class SessionManager(object):
         driver_settings = self.settings.get("driver_settings", {})
         if cache_driver:
             cache_name = '__cached_session_driver'
-            if not hasattr( self.handler.application, cache_name):
-                if not driver_name:raise SessionConfigurationError('driver missed')
-                if not driver_settings: raise SessionConfigurationError('driver settings missed.')
-                setattr( self.handler.application, cache_name, SessionDriverFactory.create_driver(driver_name, **driver_settings))
+            if not hasattr(self.handler.application, cache_name):
+                if not driver_name:
+                    raise SessionConfigurationError('driver missed')
+                if not driver_settings:
+                    raise SessionConfigurationError('driver settings missed.')
+                setattr(self.handler.application, cache_name,
+                        SessionDriverFactory.create_driver(driver_name, **
+                                                           driver_settings))
             driver = getattr(self.hanlder.application, cache_name)
         else:
-            driver = SessionDriverFactory.create_driver(driver_name, **driver_settings)
+            driver = SessionDriverFactory.create_driver(driver_name, **
+                                                        driver_settings)
         return driver
 
     def __init_settings(self):
@@ -125,9 +136,13 @@ class SessionManager(object):
 				
         """
         session_settings = self.handler.settings.get("session")
-        if not session_settings: # use default
+        if not session_settings:  # use default
             session_settings = {}
-            session_settings.update(driver='memory', driver_settings={'host':self.handler.application}, force_persistence=True, cache_driver=True)
+            session_settings.update(
+                driver='memory',
+                driver_settings={'host': self.handler.application},
+                force_persistence=True,
+                cache_driver=True)
         driver = session_settings.get("driver")
         if not driver:
             raise SessionConfigurationError('driver is missed')
@@ -150,7 +165,7 @@ class SessionManager(object):
         '''
         Add/Update session value
         '''
-        self.session[key]=value
+        self.session[key] = value
         self._is_dirty = True
         force_update = self.settings.get("force_persistence")
         if force_update:
@@ -168,10 +183,12 @@ class SessionManager(object):
         if force_update:
             self.driver.save(self._id, self.session, self._expires)
             self._is_dirty = False
+
     __deleteitem__ = delete
 
     def iterkeys(self):
         return iter(self.session)
+
     __iter__ = iterkeys
 
     def keys(self):
@@ -193,7 +210,7 @@ class SessionManager(object):
     def __getitem__(self, key):
         val = self.get(key)
         if val: return val
-        raise KeyError('%s not found' % key) 
+        raise KeyError('%s not found' % key)
 
     def __contains__(self, key):
         '''
@@ -240,10 +257,11 @@ class SessionManager(object):
     #     if session_id:return session_id
     #     return self.__generate_session_id()
 
+
 class SessionMixin(object):
     '''
     '''
-    
+
     @property
     def session(self):
         '''
@@ -254,6 +272,7 @@ class SessionMixin(object):
         if not hasattr(context, inner_property_name):
             setattr(context, inner_property_name, session_handler(context))
         return getattr(context, inner_property_name)
+
 
 class SessionConfigurationError(Exception):
     pass

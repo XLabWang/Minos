@@ -4,14 +4,15 @@
 # Copyright @ 2014 Mitchell Chu
 
 from extends.torndsession.driver import SessionDriver
-# from session import SessionConfigurationError 
+# from session import SessionConfigurationError
 import redis
 from copy import copy
 from datetime import datetime
 try:
-    import cPickle as pickle    # py2
+    import cPickle as pickle  # py2
 except:
-    import pickle               # py3
+    import pickle  # py3
+
 
 class RedisSession(SessionDriver):
     """
@@ -27,13 +28,15 @@ class RedisSession(SessionDriver):
     def save(self, session_id, session_data, expires=None):
         session_data = session_data if session_data else {}
         if expires:
-            session_data.update(__expires__ = expires)
+            session_data.update(__expires__=expires)
         session_data = pickle.dumps(session_data)
         self.__create_redis_client()
         self.client.set(session_id, session_data)
         if expires:
             td = expires - datetime.utcnow()
-            delta_seconds = int((td.microseconds + (td.seconds + td.days * 24 * 3600) * 10**6) / 10**6)
+            delta_seconds = int(
+                (td.microseconds +
+                 (td.seconds + td.days * 24 * 3600) * 10**6) / 10**6)
             self.client.expire(session_id, delta_seconds)
 
     def clear(self, session_id):

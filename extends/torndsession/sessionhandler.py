@@ -6,7 +6,9 @@
 import tornado.web
 import extends.torndsession.session
 
-class SessionBaseHandler(tornado.web.RequestHandler, extends.torndsession.session.SessionMixin):
+
+class SessionBaseHandler(tornado.web.RequestHandler,
+                         extends.torndsession.session.SessionMixin):
     """
     This is a tornado web request handler which is base on torndsession.
     Generally, user must persistent session object with manual operation when force_persistence is False
@@ -23,4 +25,4 @@ class SessionBaseHandler(tornado.web.RequestHandler, extends.torndsession.sessio
         """
         Overwrite tornado.web.RequestHandler on_finish.
         """
-        self.session.flush()    # try to save session
+        self.session.flush()  # try to save session

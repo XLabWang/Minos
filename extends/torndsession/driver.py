@@ -3,10 +3,12 @@
 #
 # Copyright @ 2014 Mitchell Chu
 
+
 class SessionDriver(object):
     '''
     abstact class for all real session driver implements.
     '''
+
     def __init__(self, **settings):
         self.settings = settings
 
@@ -22,11 +24,13 @@ class SessionDriver(object):
     def remove_expires(self):
         raise NotImplementedError()
 
+
 class SessionDriverFactory(object):
     '''
     session driver factory
     use input settings to return suitable driver's instance
     '''
+
     @staticmethod
     def create_driver(driver, **setings):
         module_name = 'extends.torndsession.%ssession' % driver.lower()
@@ -35,8 +39,10 @@ class SessionDriverFactory(object):
         # use __import__('torndsession.' + driver.lower()) just load torndsession.__init__.pyc
         cls = getattr(module, '%sSession' % driver.capitalize())
         if not 'SessionDriver' in [base.__name__ for base in cls.__bases__]:
-            raise InvalidSessionDriverException('%s not found in current driver implements ' % driver)
-        return cls              # just return driver class. 
+            raise InvalidSessionDriverException(
+                '%s not found in current driver implements ' % driver)
+        return cls  # just return driver class.
+
 
 class InvalidSessionDriverException(Exception):
     pass
